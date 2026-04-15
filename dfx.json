@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "canisters": {
+    "drug_registry": {
+      "type": "azle",
+      "main": "src/blockchain/registry/index.ts",
+      "declarations": {
+        "output": "src/declarations/drug_registry",
+        "node_compatibility": true
+      }
+    },
+    "supply_chain": {
+      "type": "azle",
+      "main": "src/blockchain/supplychain/index.ts",
+      "declarations": {
+        "output": "src/declarations/supply_chain",
+        "node_compatibility": true
+      }
+    },
+    "verification": {
+      "type": "azle",
+      "main": "src/blockchain/verification/index.ts",
+      "declarations": {
+        "output": "src/declarations/verification",
+        "node_compatibility": true
+      }
+    }
+  },
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:4943",
+      "type": "ephemeral"
+    },
+    "ic": {
+      "providers": ["https://icp0.io"],
+      "type": "persistent"
+    }
+  },
+  "output_env_file": ".env"
+}
