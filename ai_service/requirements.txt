@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+
+torch
+torchvision
+
+scikit-learn
+
+numpy
+pandas
+
+python-dotenv
+
+pytest
+pytest-asyncio
