@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - qr_codes:/app/qr_codes
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:////app/data/pharmachain.db
+      - AI_SERVICE_URL=http://ai_service:8001
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+    env_file:
+      - .env
+    depends_on:
+      - ai_service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  ai_service:
+    build:
+      context: ./ai_service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./ai_service:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_ICP_HOST=http://localhost:4943
+    command: npm run dev -- --host
+
+volumes:
+  qr_codes:
