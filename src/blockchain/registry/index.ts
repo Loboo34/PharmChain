@@ -3,16 +3,16 @@ import { IDL, query, update, caller, time } from "azle";
 // ─── Interface Definitions ─────────────────────────────────
 
 interface DrugStatus {
-  active?: boolean;
-  recalled?: boolean;
-  suspended?: boolean;
+  active?: null;
+  recalled?: null;
+  suspended?: null;
 }
 
 interface BatchStatus {
-  active?: boolean;
-  recalled?: boolean;
-  expired?: boolean;
-  in_transit?: boolean;
+  active?: null;
+  recalled?: null;
+  expired?: null;
+  in_transit?: null;
 }
 
 interface DrugRecord {
@@ -57,16 +57,16 @@ interface DrugStats {
 // ─── IDL Type Definitions ──────────────────────────────────
 
 const DrugStatusIdl = IDL.Variant({
-  active: IDL.Bool,
-  recalled: IDL.Bool,
-  suspended: IDL.Bool,
+  active: IDL.Null,
+  recalled: IDL.Null,
+  suspended: IDL.Null,
 });
 
 const BatchStatusIdl = IDL.Variant({
-  active: IDL.Bool,
-  recalled: IDL.Bool,
-  expired: IDL.Bool,
-  in_transit: IDL.Bool,
+  active: IDL.Null,
+  recalled: IDL.Null,
+  expired: IDL.Null,
+  in_transit: IDL.Null,
 });
 
 const DrugRecordIdl = IDL.Record({
@@ -199,7 +199,7 @@ export default class {
         nafdac_number: nafdacNumber,
         who_qualified: whoQualified,
         registered_at: time(),
-        status: { active: true },
+        status: { active: null },
       };
 
       this.drugStore[drugId] = drug;
@@ -264,7 +264,7 @@ export default class {
         production_date: productionDate,
         expiry_date: expiryDate,
         quantity,
-        status: { active: true },
+        status: { active: null },
         registered_at: time(),
         registered_by: userPrincipal,
       };
@@ -324,7 +324,7 @@ export default class {
 
       this.batchStore[batchId] = {
         ...batch,
-        status: { recalled: true },
+        status: { recalled: null },
       };
 
       return { ok: `Batch ${batchId} recalled successfully` };
@@ -347,7 +347,7 @@ export default class {
 
       this.drugStore[drugId] = {
         ...drug,
-        status: { suspended: true },
+        status: { suspended: null },
       };
 
       return { ok: `Drug ${drugId} suspended successfully` };
@@ -365,11 +365,11 @@ export default class {
       let recalledBatchCount = 0;
 
       Object.values(this.drugStore).forEach((drug) => {
-        if (drug.status.active) activeDrugCount++;
+        if (drug.status.active !== undefined) activeDrugCount++;
       });
 
       Object.values(this.batchStore).forEach((batch) => {
-        if (batch.status.recalled) recalledBatchCount++;
+        if (batch.status.recalled !== undefined) recalledBatchCount++;
       });
 
       return {
