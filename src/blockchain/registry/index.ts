@@ -139,7 +139,7 @@ export default class {
 
   // ── Admin Methods ──────────────────────────────────────
 
-  @update([IDL.Text])
+  @update([IDL.Text], ResultIdl)
   addRegulator(principalText: string): Result<string, string> {
     try {
       this.regulatorStore[principalText] = true;
@@ -149,7 +149,7 @@ export default class {
     }
   }
 
-  @update([IDL.Text])
+  @update([IDL.Text], ResultIdl)
   removeRegulator(principalText: string): Result<string, string> {
     try {
       delete this.regulatorStore[principalText];
@@ -159,7 +159,7 @@ export default class {
     }
   }
 
-  @update([IDL.Text])
+  @update([IDL.Text], ResultIdl)
   addManufacturer(principalText: string): Result<string, string> {
     try {
       this.manufacturerStore[principalText] = true;
@@ -171,7 +171,7 @@ export default class {
 
   // ── Drug Registration Methods ──────────────────────────
 
-  @update([IDL.Text, IDL.Text, IDL.Bool])
+  @update([IDL.Text, IDL.Text, IDL.Bool], ResultIdl)
   registerDrug(
     name: string,
     nafdacNumber: string,
@@ -211,7 +211,7 @@ export default class {
     }
   }
 
-  @query([IDL.Text])
+  @query([IDL.Text], IDL.Opt(DrugRecordIdl))
   getDrug(drugId: string): [DrugRecord] | [] {
     try {
       const drug = this.drugStore[drugId];
@@ -221,7 +221,7 @@ export default class {
     }
   }
 
-  @query([IDL.Text])
+  @query([IDL.Text], IDL.Opt(DrugRecordIdl))
   getDrugByNafdac(nafdacNumber: string): [DrugRecord] | [] {
     try {
       const drugId = this.nafdacIndex[nafdacNumber];
@@ -235,7 +235,10 @@ export default class {
 
   // ── Batch Registration Methods ─────────────────────────
 
-  @update([IDL.Text, IDL.Vec(IDL.Nat8), IDL.Nat64, IDL.Nat64, IDL.Nat64])
+  @update(
+    [IDL.Text, IDL.Vec(IDL.Nat8), IDL.Nat64, IDL.Nat64, IDL.Nat64],
+    ResultIdl
+  )
   registerBatch(
     drugId: string,
     batchHash: Uint8Array,
@@ -278,7 +281,7 @@ export default class {
     }
   }
 
-  @query([IDL.Text])
+  @query([IDL.Text], IDL.Opt(BatchRecordIdl))
   getBatch(batchId: string): [BatchRecord] | [] {
     try {
       const batch = this.batchStore[batchId];
@@ -288,7 +291,7 @@ export default class {
     }
   }
 
-  @query([IDL.Vec(IDL.Nat8)])
+  @query([IDL.Vec(IDL.Nat8)], VerifyResultIdl)
   verifyHash(hash: Uint8Array): VerifyResult {
     try {
       const hexHash = this.hashToHex(hash);
@@ -310,7 +313,7 @@ export default class {
 
   // ── Recall Methods ────────────────────────────────────
 
-  @update([IDL.Text])
+  @update([IDL.Text], ResultIdl)
   recallBatch(batchId: string): Result<string, string> {
     try {
       if (!this.isRegulator()) {
@@ -333,7 +336,7 @@ export default class {
     }
   }
 
-  @update([IDL.Text])
+  @update([IDL.Text], ResultIdl)
   suspendDrug(drugId: string): Result<string, string> {
     try {
       if (!this.isRegulator()) {
@@ -358,7 +361,7 @@ export default class {
 
   // ── Statistics Methods ────────────────────────────────
 
-  @query([])
+  @query([], StatsIdl)
   getStats(): DrugStats {
     try {
       let activeDrugCount = 0;
@@ -388,12 +391,12 @@ export default class {
     }
   }
 
-  @query([])
+  @query([], IDL.Nat32)
   getDrugCount(): number {
     return Object.keys(this.drugStore).length;
   }
 
-  @query([])
+  @query([], IDL.Nat32)
   getBatchCount(): number {
     return Object.keys(this.batchStore).length;
   }

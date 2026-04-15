@@ -107,13 +107,10 @@ export default class {
    *   2. Verifying the caller is authorised for this event_type
    *   3. Optionally running an Isolation Forest anomaly check on the route
    */
-  @update([
-    IDL.Text,
-    IDL.Text,
-    IDL.Text,
-    EventTypeIdl,
-    IDL.Text,
-  ])
+  @update(
+    [IDL.Text, IDL.Text, IDL.Text, EventTypeIdl, IDL.Text],
+    ResultIdl
+  )
   addEvent(
     batchId: string,
     toPrincipal: string,
@@ -165,7 +162,7 @@ export default class {
    * The frontend calls this directly via @dfinity/agent (no backend hop)
    * to display the full chain when a user scans a batch QR code.
    */
-  @query([IDL.Text])
+  @query([IDL.Text], IDL.Vec(CustodyEventIdl))
   getCustodyChain(batchId: string): CustodyEvent[] {
     try {
       const eventIds = this.chainIndex[batchId];
@@ -194,7 +191,7 @@ export default class {
    * Fetch a single custody event by event_id.
    * Used for audit deep-dives and alert investigation.
    */
-  @query([IDL.Text])
+  @query([IDL.Text], IDL.Opt(CustodyEventIdl))
   getEvent(eventId: string): [CustodyEvent] | [] {
     try {
       const event = this.eventStore[eventId];
@@ -209,7 +206,7 @@ export default class {
    * Returns only the most recent event for a batch.
    * Fast path for "where is this batch right now?" queries.
    */
-  @query([IDL.Text])
+  @query([IDL.Text], IDL.Opt(CustodyEventIdl))
   getLatestCustody(batchId: string): [CustodyEvent] | [] {
     try {
       const eventIds = this.chainIndex[batchId];
@@ -229,7 +226,7 @@ export default class {
    * An unusually long chain (e.g. > 15 hops) is itself an anomaly signal —
    * the AI layer uses this count as one Isolation Forest feature.
    */
-  @query([IDL.Text])
+  @query([IDL.Text], IDL.Nat32)
   getChainLength(batchId: string): number {
     try {
       const eventIds = this.chainIndex[batchId];
@@ -243,7 +240,7 @@ export default class {
    * get_stats
    * Total events recorded across all batches. Regulator dashboard metric.
    */
-  @query([])
+  @query([], StatsIdl)
   getStats(): CustodyStats {
     try {
       return {

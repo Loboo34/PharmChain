@@ -144,7 +144,10 @@ export default class {
    * creates a tamper-proof link — if the evidence is later disputed,
    * anyone can verify the hash matches what was originally submitted.
    */
-  @update([IDL.Text, AlertTypeIdl, IDL.Text, IDL.Vec(IDL.Nat8), IDL.Float64])
+  @update(
+    [IDL.Text, AlertTypeIdl, IDL.Text, IDL.Vec(IDL.Nat8), IDL.Float64],
+    ResultIdl
+  )
   flagCounterfeit(
     batchId: string,
     alertType: AlertType,
@@ -192,7 +195,7 @@ export default class {
    * The original alert remains — only the `resolved` flag changes.
    * Only regulators should call this; enforce at FastAPI layer.
    */
-  @update([IDL.Text])
+  @update([IDL.Text], ResultIdl)
   resolveAlert(alertId: string): Result<string, string> {
     try {
       const alert = this.alertStore[alertId];
@@ -213,7 +216,7 @@ export default class {
    * get_alert
    * Fetch a single alert by ID. Full record including evidence_hash.
    */
-  @query([IDL.Text])
+  @query([IDL.Text], IDL.Opt(AlertRecordIdl))
   getAlert(alertId: string): [AlertRecord] | [] {
     try {
       const alert = this.alertStore[alertId];
@@ -229,7 +232,7 @@ export default class {
    * Frontend calls this directly after a failed verify_hash to show
    * the user exactly why the drug is flagged.
    */
-  @query([IDL.Text])
+  @query([IDL.Text], IDL.Vec(AlertRecordIdl))
   getAlertsForBatch(batchId: string): AlertRecord[] {
     try {
       const alertIds = this.batchAlertIndex[batchId];
@@ -255,7 +258,7 @@ export default class {
    * Powers the regulator geographic hotspot map.
    * Location is matched on the city segment (text before first comma).
    */
-  @query([IDL.Text])
+  @query([IDL.Text], IDL.Vec(AlertSummaryIdl))
   getAlertsByLocation(city: string): AlertSummary[] {
     try {
       const alertIds = this.locationAlertIndex[city.trim()];
@@ -290,7 +293,7 @@ export default class {
    * Paginated via offset + limit to avoid hitting query response size limits.
    * Used by the regulator dashboard for the active incidents view.
    */
-  @query([IDL.Nat32, IDL.Nat32])
+  @query([IDL.Nat32, IDL.Nat32], IDL.Vec(AlertSummaryIdl))
   getActiveAlerts(offset: number, limit: number): AlertSummary[] {
     try {
       const all: AlertSummary[] = [];
@@ -325,7 +328,7 @@ export default class {
    * Returns counts of total, active, and resolved alerts.
    * Also returns count of unique batches that have ever been flagged.
    */
-  @query([])
+  @query([], StatsIdl)
   getStats(): AlertStats {
     try {
       let active = 0;
