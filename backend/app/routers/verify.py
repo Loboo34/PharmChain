@@ -105,3 +105,7 @@ async def scan_drug(
         batch=BatchOut.model_validate(batch) if batch else None,
         message=messages[verdict],
     )
+
+# POST	/verify/image	Standalone packaging image analysis (AI only, no blockchain)	any
+# GET	/verify/history	Scan history for current user	any
+# GET	/verify/{scan_id}	Get single scan result by ID	any

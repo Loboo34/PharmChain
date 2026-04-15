@@ -47,3 +47,8 @@ async def refresh(data: RefreshRequest):
         access_token=create_access_token(user_id),
         refresh_token=create_refresh_token(user_id),
     )
+
+# GET	/users/me	Get current user profile	any
+# PUT	/users/me	Update profile (name, contact, license number)	any
+# GET	/users	List all users (admin: regulator)	regulator
+# PUT	/users/{id}/role	Promote/demote user role	regulator
