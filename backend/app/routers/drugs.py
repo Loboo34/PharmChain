@@ -73,19 +73,21 @@ async def register_batch(
     hash_input = f"{drug_id}{batch_data.batch_number}{batch_data.production_date}{batch_data.expiry_date}"
     blockchain_hash = hashlib.sha256(hash_input.encode()).hexdigest()
     
-    # Register on ICP
-    icp_result = await icp_service.add_custody_event({
-        "batch_id": str(drug_id),
-        "batch_number": batch_data.batch_number,
-        "batch_hash": blockchain_hash,
-        "production_date": batch_data.production_date.isoformat(),
-        "expiry_date": batch_data.expiry_date.isoformat(),
-        "quantity": batch_data.quantity
-    })
+    # Register the new batch on ICP drug registry
+    icp_result = await icp_service.register_batch(
+        drug_id=str(drug_id),
+        batch_number=batch_data.batch_number,
+        batch_hash=blockchain_hash,
+        production_date=batch_data.production_date.isoformat(),
+        expiry_date=batch_data.expiry_date.isoformat(),
+        quantity=batch_data.quantity,
+    )
     
-    # Generate QR code (store as JSON payload)
+    batch_id_on_chain = icp_result.get("batch_id") or icp_result.get("ok")
+    
+    # Generate QR code payload for verification
     qr_payload = json.dumps({
-        "batch_id": str(drug_id),
+        "batch_id": batch_id_on_chain or str(drug_id),
         "batch_number": batch_data.batch_number,
         "hash": blockchain_hash
     })
@@ -97,8 +99,8 @@ async def register_batch(
         production_date=batch_data.production_date,
         expiry_date=batch_data.expiry_date,
         blockchain_hash=blockchain_hash,
-        icp_tx_id=icp_result.get("event_id"),
-        qr_code_url=qr_payload  # Store payload, actual QR generation in frontend
+        icp_tx_id=batch_id_on_chain,
+        qr_code_url=qr_payload
     )
     
     db.add(batch)

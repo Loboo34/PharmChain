@@ -27,12 +27,11 @@ async def create_shipment(
         raise HTTPException(status_code=404, detail="Batch not found")
     
     custody_event = await icp_service.add_custody_event({
-        "batch_id": str(shipment_data.batch_id),
-        "from_principal": str(current_user.icp_principal or current_user.id),
-        "to_principal": str(shipment_data.to_actor),
-        "origin": shipment_data.origin_country,
-        "destination": shipment_data.destination_country,
-        "event_type": "shipment_created"
+        "batchId": str(shipment_data.batch_id),
+        "toPrincipal": str(shipment_data.to_actor),
+        "location": shipment_data.destination_country,
+        "eventType": {"dispatched": null},
+        "notes": f"Shipment from {shipment_data.origin_country} to {shipment_data.destination_country}",
     })
     
     shipment = Shipment(
@@ -78,11 +77,11 @@ async def receive_shipment(
         db.add(alert)
     
     await icp_service.add_custody_event({
-        "batch_id": str(shipment.batch_id),
-        "from_principal": str(shipment.from_actor),
-        "to_principal": str(current_user.icp_principal or current_user.id),
+        "batchId": str(shipment.batch_id),
+        "toPrincipal": str(current_user.icp_principal or current_user.id),
         "location": shipment.destination_country,
-        "event_type": "received"
+        "eventType": {"received": null},
+        "notes": f"Shipment received by {current_user.organization or current_user.id}",
     })
     
     await db.flush()

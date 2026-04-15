@@ -7,9 +7,8 @@
   },
   "type": "module",
   "workspaces": [
-    "backend",
     "frontend",
-    "blockchain"
+    "src/blockchain"
   ],
   "dependencies": {
     "@dfinity/agent": "^2.3.0",
@@ -26,6 +25,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
-    "vite-plugin-environment": "^1.1.3"
+    "vite-plugin-environment": "^1.1.3",
+    "azle": "^0.25.0"
   }
 }

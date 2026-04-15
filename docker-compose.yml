@@ -1,48 +1,168 @@
 version: "3.9"
 
 services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app
-      - qr_codes:/app/qr_codes
-    environment:
-      - DATABASE_URL=sqlite+aiosqlite:////app/data/pharmachain.db
-      - AI_SERVICE_URL=http://ai_service:8001
-      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000
-    env_file:
-      - .env
-    depends_on:
-      - ai_service
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+  # PostgreSQL Database (optional, for future scaling)
+  # db:
+  #   image: postgres:16-alpine
+  #   environment:
+  #     POSTGRES_DB: pharmachain
+  #     POSTGRES_USER: pharmachain
+  #     POSTGRES_PASSWORD: pharmachain
+  #   volumes:
+  #     - db_data:/var/lib/postgresql/data
+  #   networks:
+  #     - pharmachain-network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U pharmachain"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
 
+  # AI Classification & Anomaly Detection Service
   ai_service:
     build:
       context: ./ai_service
       dockerfile: Dockerfile
+    container_name: pharmachain-ai
     ports:
       - "8001:8001"
     volumes:
       - ./ai_service:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+      - ai_weights:/app/weights
+      - ai_logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TORCH_HOME=/app/weights
+      - LOG_LEVEL=info
+    networks:
+      - pharmachain-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/health', timeout=5).raise_for_status()"]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+    # Resource limits for production
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 3G
+        reservations:
+          cpus: '1'
+          memory: 2G
 
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pharmachain-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - backend_data:/app/data
+      - qr_codes:/app/qr_codes
+      - backend_logs:/app/logs
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:////app/data/pharmachain.db
+      - AI_SERVICE_URL=http://ai_service:8001
+      - CORS_ORIGINS=http://frontend:5173,http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=info
+    env_file:
+      - .env.local
+    networks:
+      - pharmachain-network
+    depends_on:
+      ai_service:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Frontend Application
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    container_name: pharmachain-frontend
     ports:
       - "5173:5173"
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+      - frontend_node_modules:/app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_URL=http://backend:8000
       - VITE_ICP_HOST=http://localhost:4943
-    command: npm run dev -- --host
+      - NODE_ENV=development
+    networks:
+      - pharmachain-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173/"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
+  # ICP Local Canister Network (optional for development)
+  # icp_local:
+  #   image: dfinity/replica:latest
+  #   ports:
+  #     - "4943:4943"
+  #   networks:
+  #     - pharmachain-network
+  #   environment:
+  #     - REPLICA_PORT=4943
+  #   restart: unless-stopped
+
+# Networks
+networks:
+  pharmachain-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# Volumes for persistent data
 volumes:
+  ai_weights:
+    driver: local
+  ai_logs:
+    driver: local
+  backend_data:
+    driver: local
+  backend_logs:
+    driver: local
   qr_codes:
+    driver: local
+  frontend_node_modules:
+    driver: local
+  # db_data:
+  #   driver: local

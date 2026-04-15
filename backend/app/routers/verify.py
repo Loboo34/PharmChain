@@ -5,7 +5,8 @@ from app.core.database import get_db
 from app.deps import get_current_user
 from app.models.user import User
 from app.models.drug import Batch
-from app.models.shipment import ScanLog, Alert, Verdict, AlertType, AlertSeverity
+from app.models.scan_log import ScanLog, Verdict
+from app.models.alert import Alert, AlertType, AlertSeverity
 from app.services import ai_service, icp_service
 from app.schemas import ScanResult
 from app.core.config import settings
